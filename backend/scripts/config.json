@@ -1,0 +1,29 @@
+{
+  "ffmpeg_path": "ffmpeg",
+  "default_preset": "fast",
+  "output_directory": "./output",
+  "temp_directory": "./temp",
+  "presets": {
+    "slow": {
+      "silence_threshold": -40,
+      "before_padding": 0.5,
+      "after_padding": 0.8,
+      "min_silence_duration": 1.0,
+      "description": "适用于安静环境的口播视频，保留更多上下文"
+    },
+    "medium": {
+      "silence_threshold": -35,
+      "before_padding": 0.3,
+      "after_padding": 0.5,
+      "min_silence_duration": 0.8,
+      "description": "平衡的设置，适合大多数口播视频"
+    },
+    "fast": {
+      "silence_threshold": -30,
+      "before_padding": 0.1,
+      "after_padding": 0.1,
+      "min_silence_duration": 0.3,
+      "description": "快节奏剪辑，移除更多静音片段"
+    }
+  }
+}

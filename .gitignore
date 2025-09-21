@@ -1,0 +1,4 @@
+backend/scripts/data/cc+jenkins_v1.mp4
+docs/*
+backend/scripts/*.mp4
+*.pyc

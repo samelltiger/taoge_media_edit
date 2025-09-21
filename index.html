@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自媒体工具集 - 静音片段过滤工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .step-indicator {
+            display: flex;
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: #dee2e6;
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step.active::after {
+            background: #007bff;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: bold;
+        }
+
+        .step.active .step-number {
+            background: #007bff;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+        }
+
+        .step-title {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .step.active .step-title {
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .content-area {
+            padding: 40px;
+        }
+
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #0056b3;
+            background: #e7f1ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #e8f5e8;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .upload-hint {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .config-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .config-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .preset-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .preset-card {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preset-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+        }
+
+        .preset-card.active {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .preset-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .preset-description {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 12px;
+        }
+
+        .preset-params {
+            font-size: 0.8rem;
+            color: #007bff;
+            font-family: monospace;
+        }
+
+        .custom-controls {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .range-input {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .range-value {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .waveform-section {
+            margin-top: 30px;
+        }
+
+        .waveform-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .waveform-placeholder {
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .waveform-canvas {
+            width: 100%;
+            height: 150px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .waveform-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .threshold-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sample-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .sample-btn:hover {
+            background: #218838;
+        }
+
+        .output-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .output-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .option-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-section {
+            background: #e7f1ff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .preview-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 15px;
+        }
+
+        .preview-btn:hover {
+            background: #138496;
+        }
+
+        .process-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: block;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+
+        .process-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+
+        .process-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .preset-modes {
+                grid-template-columns: 1fr;
+            }
+
+            .output-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>自媒体工具集</h1>
+            <p>智能静音片段过滤工具 - 让剪辑更高效</p>
+        </header>
+
+        <main class="main-content">
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <div class="step-title">上传文件</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <div class="step-title">参数配置</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <div class="step-title">预览编辑</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-number">4</div>
+                    <div class="step-title">输出处理</div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- 文件上传区域 -->
+                <div class="upload-section" id="uploadSection">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">拖拽文件到此处或点击选择文件</div>
+                        <div class="upload-hint">支持 MP4, MOV, MP3, WAV, M4A 格式</div>
+                        <input type="file" class="file-input" id="fileInput" accept=".mp4,.mov,.mp3,.wav,.m4a">
+                    </div>
+
+                    <div class="progress-bar" id="progressBar" style="display: none;">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <!-- 参数配置区域 -->
+                <div class="config-section" id="configSection">
+                    <h2 class="section-title">参数配置</h2>
+
+                    <!-- 预设模式 -->
+                    <div class="preset-modes">
+                        <div class="preset-card" data-preset="slow">
+                            <div class="preset-title">慢速节奏</div>
+                            <div class="preset-description">适用于访谈、播客等停顿较多的场景</div>
+                            <div class="preset-params">-50dB | 0.5s | 0.8s</div>
+                        </div>
+                        <div class="preset-card active" data-preset="medium">
+                            <div class="preset-title">中等节奏</div>
+                            <div class="preset-description">适用于大多数标准口播视频</div>
+                            <div class="preset-params">-40dB | 0.3s | 0.5s</div>
+                        </div>
+                        <div class="preset-card" data-preset="fast">
+                            <div class="preset-title">快速节奏</div>
+                            <div class="preset-description">适用于信息密集、语速快的短视频</div>
+                            <div class="preset-params">-35dB | 0.2s | 0.3s</div>
+                        </div>
+                        <div class="preset-card" data-preset="custom">
+                            <div class="preset-title">自定义</div>
+                            <div class="preset-description">手动调整所有参数</div>
+                            <div class="preset-params">自由配置</div>
+                        </div>
+                    </div>
+
+                    <!-- 自定义控制 -->
+                    <div class="custom-controls">
+                        <div class="control-group">
+                            <label class="control-label tooltip" data-tooltip="低于此音量值的片段将被判定为静音">
+                                静音阈值
+                                <span class="range-value" id="thresholdValue">-40 dB</span>
+                            </label>
+                            <input type="range" class="range-input" id="thresholdRange" min="-60" max="-20" value="-40" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label tooltip" data-tooltip="在每个有用片段开始处额外保留的时间">
+                                前过渡保留
+                                <span class="range-value" id="preTransitionValue">0.3 秒</span>
+                            </label>
+                            <input type="range" class="range-input" id="preTransitionRange" min="0" max="2" value="0.3" step="0.1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label tooltip" data-tooltip="在每个有用片段结束处额外保留的时间">
+                                后过渡保留
+                                <span class="range-value" id="postTransitionValue">0.5 秒</span>
+                            </label>
+                            <input type="range" class="range-input" id="postTransitionRange" min="0" max="2" value="0.5" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 波形图编辑区域 -->
+                <div class="config-section" id="waveformSection">
+                    <h2 class="section-title">音频波形预览</h2>
+
+                    <div class="waveform-container">
+                        <div class="waveform-placeholder" id="waveformPlaceholder">
+                            <p>📊 上传文件后将显示音频波形图</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">波形图将显示音量变化，灰色部分为静音片段，蓝色部分为有用片段</p>
+                        </div>
+                        <canvas class="waveform-canvas" id="waveformCanvas" style="display: none;"></canvas>
+                    </div>
+
+                    <div class="waveform-controls">
+                        <div class="threshold-control">
+                            <button class="sample-btn" id="sampleBtn" title="点击后在波形图的背景噪音部分点击，自动设置阈值">🎯 采样工具</button>
+                            <span style="font-size: 0.9rem; color: #6c757d;">点击工具后在波形图噪音处点击设置阈值</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.9rem; color: #6c757d;">拖动阈值线调整参数</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输出设置区域 -->
+                <div class="config-section" id="outputSection">
+                    <h2 class="section-title">输出设置</h2>
+
+                    <div class="output-options">
+                        <div class="option-group">
+                            <div class="option-title">输出格式</div>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="outputFormat" value="mp4" checked>
+                                    <span>MP4 视频</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="outputFormat" value="mp3">
+                                    <span>MP3 音频</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="option-group">
+                            <div class="option-title">输出方式</div>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="outputMethod" value="direct" checked>
+                                    <span>直接下载处理后文件</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="outputMethod" value="xml">
+                                    <span>生成 Premiere Pro XML</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="outputMethod" value="fcpxml">
+                                    <span>生成 Final Cut Pro XML</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h3 style="margin-bottom: 15px;">处理前预览</h3>
+                        <p style="margin-bottom: 20px; color: #6c757d;">预览30秒典型片段，确认处理效果</p>
+                        <button class="preview-btn" id="previewBtn" disabled>🎵 预览效果</button>
+                        <button class="process-btn" id="processBtn" disabled>开始处理</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 页面交互逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const configSection = document.getElementById('configSection');
+            const waveformSection = document.getElementById('waveformSection');
+            const outputSection = document.getElementById('outputSection');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+
+            // 预设模式
+            const presetCards = document.querySelectorAll('.preset-card');
+            const thresholdRange = document.getElementById('thresholdRange');
+            const preTransitionRange = document.getElementById('preTransitionRange');
+            const postTransitionRange = document.getElementById('postTransitionRange');
+            const thresholdValue = document.getElementById('thresholdValue');
+            const preTransitionValue = document.getElementById('preTransitionValue');
+            const postTransitionValue = document.getElementById('postTransitionValue');
+
+            // 预设配置
+            const presets = {
+                slow: { threshold: -50, preTransition: 0.5, postTransition: 0.8 },
+                medium: { threshold: -40, preTransition: 0.3, postTransition: 0.5 },
+                fast: { threshold: -35, preTransition: 0.2, postTransition: 0.3 },
+                custom: null
+            };
+
+            // 文件上传处理
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+
+            function handleFileUpload(file) {
+                // 验证文件格式
+                const allowedTypes = ['video/mp4', 'video/quicktime', 'audio/mpeg', 'audio/wav', 'audio/mp4'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('不支持的文件格式，请上传 MP4, MOV, MP3, WAV, M4A 格式的文件');
+                    return;
+                }
+
+                // 显示上传进度
+                progressBar.style.display = 'block';
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(progressInterval);
+                        setTimeout(() => {
+                            progressBar.style.display = 'none';
+                            showConfigSection();
+                            generateMockWaveform();
+                        }, 500);
+                    }
+                    progressFill.style.width = progress + '%';
+                }, 100);
+
+                // 更新上传区域显示
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">✅</div>
+                    <div class="upload-text">文件上传成功</div>
+                    <div class="upload-hint">${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</div>
+                `;
+            }
+
+            function showConfigSection() {
+                updateStepIndicator(2);
+                configSection.classList.add('active');
+                waveformSection.classList.add('active');
+                outputSection.classList.add('active');
+                document.getElementById('previewBtn').disabled = false;
+                document.getElementById('processBtn').disabled = false;
+            }
+
+            function updateStepIndicator(activeStep) {
+                for (let i = 1; i <= 4; i++) {
+                    const step = document.getElementById(`step${i}`);
+                    step.classList.remove('active', 'completed');
+                    if (i < activeStep) {
+                        step.classList.add('completed');
+                    } else if (i === activeStep) {
+                        step.classList.add('active');
+                    }
+                }
+            }
+
+            // 预设模式切换
+            presetCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    presetCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+
+                    const preset = card.dataset.preset;
+                    if (presets[preset]) {
+                        const config = presets[preset];
+                        thresholdRange.value = config.threshold;
+                        preTransitionRange.value = config.preTransition;
+                        postTransitionRange.value = config.postTransition;
+                        updateRangeValues();
+                    }
+                });
+            });
+
+            // 范围滑块更新
+            thresholdRange.addEventListener('input', updateRangeValues);
+            preTransitionRange.addEventListener('input', updateRangeValues);
+            postTransitionRange.addEventListener('input', updateRangeValues);
+
+            function updateRangeValues() {
+                thresholdValue.textContent = thresholdRange.value + ' dB';
+                preTransitionValue.textContent = preTransitionRange.value + ' 秒';
+                postTransitionValue.textContent = postTransitionRange.value + ' 秒';
+
+                // 如果修改了参数，自动切换到自定义模式
+                const currentPreset = document.querySelector('.preset-card.active').dataset.preset;
+                if (currentPreset !== 'custom') {
+                    const config = presets[currentPreset];
+                    if (config && (
+                        parseFloat(thresholdRange.value) !== config.threshold ||
+                        parseFloat(preTransitionRange.value) !== config.preTransition ||
+                        parseFloat(postTransitionRange.value) !== config.postTransition
+                    )) {
+                        presetCards.forEach(c => c.classList.remove('active'));
+                        document.querySelector('[data-preset="custom"]').classList.add('active');
+                    }
+                }
+            }
+
+            // 生成模拟波形图
+            function generateMockWaveform() {
+                const canvas = document.getElementById('waveformCanvas');
+                const placeholder = document.getElementById('waveformPlaceholder');
+                const ctx = canvas.getContext('2d');
+
+                placeholder.style.display = 'none';
+                canvas.style.display = 'block';
+
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+
+                // 绘制模拟波形
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 绘制阈值线
+                const thresholdY = canvas.height * 0.7;
+                ctx.strokeStyle = '#dc3545';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(0, thresholdY);
+                ctx.lineTo(canvas.width, thresholdY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 绘制波形数据
+                const barWidth = 2;
+                const barGap = 1;
+                const numBars = Math.floor(canvas.width / (barWidth + barGap));
+
+                for (let i = 0; i < numBars; i++) {
+                    const x = i * (barWidth + barGap);
+                    const height = Math.random() * canvas.height * 0.8;
+                    const y = (canvas.height - height) / 2;
+
+                    // 根据高度决定颜色（模拟静音检测）
+                    if (height < canvas.height * 0.3) {
+                        ctx.fillStyle = '#dee2e6'; // 静音片段
+                    } else {
+                        ctx.fillStyle = '#007bff'; // 有用片段
+                    }
+
+                    ctx.fillRect(x, y, barWidth, height);
+                }
+
+                // 添加阈值线标签
+                ctx.fillStyle = '#dc3545';
+                ctx.font = '12px Arial';
+                ctx.fillText('静音阈值', 10, thresholdY - 5);
+            }
+
+            // 采样工具
+            document.getElementById('sampleBtn').addEventListener('click', function() {
+                this.style.background = '#ffc107';
+                this.textContent = '🎯 点击波形图采样';
+
+                const canvas = document.getElementById('waveformCanvas');
+                canvas.style.cursor = 'crosshair';
+
+                const sampleHandler = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    const normalizedY = y / canvas.height;
+                    const sampledValue = Math.round(-60 + (1 - normalizedY) * 40);
+
+                    thresholdRange.value = sampledValue;
+                    updateRangeValues();
+
+                    // 重置采样工具
+                    this.style.background = '#28a745';
+                    this.textContent = '🎯 采样工具';
+                    canvas.style.cursor = 'default';
+                    canvas.removeEventListener('click', sampleHandler);
+                };
+
+                canvas.addEventListener('click', sampleHandler);
+            });
+
+            // 预览和处理按钮
+            document.getElementById('previewBtn').addEventListener('click', function() {
+                updateStepIndicator(3);
+                alert('预览功能：这里会播放30秒的处理后效果预览');
+            });
+
+            document.getElementById('processBtn').addEventListener('click', function() {
+                updateStepIndicator(4);
+                this.disabled = true;
+                this.textContent = '处理中...';
+
+                // 模拟处理过程
+                setTimeout(() => {
+                    this.textContent = '处理完成';
+                    this.style.background = '#17a2b8';
+                    alert('处理完成！文件已准备下载。');
+                }, 3000);
+            });
+
+            // 初始化范围值显示
+            updateRangeValues();
+        });
+    </script>
+</body>
+</html>

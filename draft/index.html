@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自媒体工具集 - 静音片段过滤工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部导航 -->
+        <header class="header">
+            <div class="logo">
+                <h1>自媒体工具集</h1>
+                <p>提升创作效率的智能工具</p>
+            </div>
+            <nav class="nav">
+                <span class="nav-item active">静音片段过滤</span>
+                <span class="nav-item disabled">更多工具</span>
+            </nav>
+        </header>
+
+        <!-- 主内容区域 -->
+        <main class="main">
+            <!-- 工具标题区 -->
+            <section class="tool-header">
+                <h2>静音片段过滤工具</h2>
+                <p>智能识别并去除视频中的静音片段，提升剪辑效率</p>
+            </section>
+
+            <!-- 文件上传区域 -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <h3>拖拽文件到此处或点击上传</h3>
+                    <p>支持格式：MP4, MOV, MP3, WAV, M4A</p>
+                    <input type="file" id="fileInput" accept=".mp4,.mov,.mp3,.wav,.m4a" hidden>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
+                </div>
+
+                <!-- 文件信息显示 -->
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-details">
+                        <span class="file-name" id="fileName"></span>
+                        <span class="file-size" id="fileSize"></span>
+                        <span class="file-duration" id="fileDuration"></span>
+                    </div>
+                    <div class="upload-progress">
+                        <div class="progress-bar" id="progressBar"></div>
+                        <span class="progress-text" id="progressText">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 参数配置区域 -->
+            <section class="config-section" id="configSection" style="display: none;">
+                <h3>参数配置</h3>
+
+                <!-- 预设档位 -->
+                <div class="preset-modes">
+                    <h4>节奏模式预设</h4>
+                    <div class="mode-buttons">
+                        <button class="mode-btn" data-mode="slow">慢速节奏</button>
+                        <button class="mode-btn active" data-mode="medium">中等节奏</button>
+                        <button class="mode-btn" data-mode="fast">快速节奏</button>
+                        <button class="mode-btn" data-mode="custom">自定义</button>
+                    </div>
+                    <div class="mode-description">
+                        <p id="modeDesc">适用于大多数标准口播视频</p>
+                    </div>
+                </div>
+
+                <!-- 核心参数 -->
+                <div class="parameters">
+                    <div class="param-group">
+                        <label for="silenceThreshold">静音阈值 (dB)</label>
+                        <div class="param-control">
+                            <input type="range" id="silenceThreshold" min="-60" max="-20" value="-40" step="1">
+                            <input type="number" id="silenceThresholdValue" min="-60" max="-20" value="-40">
+                            <span class="param-unit">dB</span>
+                        </div>
+                        <p class="param-tip">低于此音量值的片段将被判定为静音</p>
+                    </div>
+
+                    <div class="param-group">
+                        <label for="leadingPadding">前过渡保留 (秒)</label>
+                        <div class="param-control">
+                            <input type="range" id="leadingPadding" min="0" max="2" value="0.3" step="0.1">
+                            <input type="number" id="leadingPaddingValue" min="0" max="2" value="0.3" step="0.1">
+                            <span class="param-unit">秒</span>
+                        </div>
+                        <p class="param-tip">在有用片段开始处额外保留的时间</p>
+                    </div>
+
+                    <div class="param-group">
+                        <label for="trailingPadding">后过渡保留 (秒)</label>
+                        <div class="param-control">
+                            <input type="range" id="trailingPadding" min="0" max="2" value="0.5" step="0.1">
+                            <input type="number" id="trailingPaddingValue" min="0" max="2" value="0.5" step="0.1">
+                            <span class="param-unit">秒</span>
+                        </div>
+                        <p class="param-tip">在有用片段结束处额外保留的时间</p>
+                    </div>
+                </div>
+
+                <!-- 高级参数 -->
+                <div class="advanced-params" id="advancedParams">
+                    <h4>高级参数 <button class="toggle-btn" id="toggleAdvanced">展开</button></h4>
+                    <div class="advanced-content" style="display: none;">
+                        <div class="param-group">
+                            <label for="minSilenceDuration">最小静音时长 (秒)</label>
+                            <div class="param-control">
+                                <input type="range" id="minSilenceDuration" min="0.1" max="2" value="0.3" step="0.1">
+                                <input type="number" id="minSilenceDurationValue" min="0.1" max="2" value="0.3" step="0.1">
+                                <span class="param-unit">秒</span>
+                            </div>
+                            <p class="param-tip">短于此时长的静音片段将被忽略</p>
+                        </div>
+
+                        <div class="param-group">
+                            <label for="minVoiceDuration">最小人声时长 (秒)</label>
+                            <div class="param-control">
+                                <input type="range" id="minVoiceDuration" min="0.1" max="2" value="0.5" step="0.1">
+                                <input type="number" id="minVoiceDurationValue" min="0.1" max="2" value="0.5" step="0.1">
+                                <span class="param-unit">秒</span>
+                            </div>
+                            <p class="param-tip">短于此时长的人声片段将被忽略</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 音频波形显示区域 -->
+            <section class="waveform-section" id="waveformSection" style="display: none;">
+                <h3>音频波形分析</h3>
+                <div class="waveform-container">
+                    <div class="waveform-controls">
+                        <button class="control-btn" id="samplingBtn">🎯 采样工具</button>
+                        <button class="control-btn" id="playBtn">▶️ 播放</button>
+                        <button class="control-btn" id="pauseBtn" style="display: none;">⏸️ 暂停</button>
+                        <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                    </div>
+
+                    <!-- 波形图区域 -->
+                    <div class="waveform-canvas-container">
+                        <canvas id="waveformCanvas" width="800" height="200"></canvas>
+                        <div class="threshold-line" id="thresholdLine"></div>
+                        <div class="playhead" id="playhead"></div>
+                    </div>
+
+                    <!-- 波形图工具栏 -->
+                    <div class="waveform-toolbar">
+                        <button class="tool-btn" id="cutTool">✂️ 切割</button>
+                        <button class="tool-btn" id="mergeTool">🔗 合并</button>
+                        <button class="tool-btn" id="deleteTool">🗑️ 删除</button>
+                        <button class="tool-btn" id="undoBtn">↶ 撤销</button>
+                        <button class="tool-btn" id="redoBtn">↷ 重做</button>
+                    </div>
+
+                    <!-- 片段信息 -->
+                    <div class="segments-info">
+                        <div class="segment-stats">
+                            <span class="stat">有用片段: <strong id="validSegments">0</strong></span>
+                            <span class="stat">静音片段: <strong id="silentSegments">0</strong></span>
+                            <span class="stat">总时长: <strong id="totalDuration">00:00</strong></span>
+                            <span class="stat">保留时长: <strong id="keepDuration">00:00</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 预览和输出区域 -->
+            <section class="output-section" id="outputSection" style="display: none;">
+                <h3>预览与输出</h3>
+
+                <!-- 预览功能 -->
+                <div class="preview-area">
+                    <h4>效果预览</h4>
+                    <p>播放30秒典型片段，确认处理效果</p>
+                    <button class="preview-btn" id="previewBtn">🎵 生成预览</button>
+                    <audio id="previewAudio" controls style="display: none;"></audio>
+                </div>
+
+                <!-- 输出设置 -->
+                <div class="output-settings">
+                    <h4>输出设置</h4>
+
+                    <div class="setting-group">
+                        <label>输出格式</label>
+                        <select id="outputFormat">
+                            <option value="mp4">视频 (MP4)</option>
+                            <option value="mp3">音频 (MP3)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>输出质量</label>
+                        <select id="outputQuality">
+                            <option value="high">高质量</option>
+                            <option value="medium" selected>中等质量</option>
+                            <option value="low">快速压缩</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>输出方式</label>
+                        <select id="outputMethod">
+                            <option value="download">直接下载文件</option>
+                            <option value="premiere">生成 Premiere Pro XML</option>
+                            <option value="finalcut">生成 Final Cut Pro XML</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 处理按钮 -->
+                <div class="process-area">
+                    <button class="process-btn" id="processBtn">🚀 开始处理</button>
+                    <div class="process-status" id="processStatus" style="display: none;">
+                        <div class="process-progress">
+                            <div class="process-bar" id="processBar"></div>
+                        </div>
+                        <p class="process-text" id="processText">正在处理中...</p>
+                        <p class="process-eta" id="processEta">预计完成时间: 2分钟</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>&copy; 2024 自媒体工具集 - 专为创作者打造的效率工具</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
