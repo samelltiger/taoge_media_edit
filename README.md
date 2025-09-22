@@ -9,3 +9,7 @@
 
 # 支持
 有任何问题，可以在GitHub里提issue，或者联系微信： ithulianwang ， 新功能上线会通过发布在公众号： 涛哥AI编程 。
+
+### 交流群
+![](./images/we-group.jpg)
+
